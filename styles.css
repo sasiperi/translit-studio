@@ -1,0 +1,113 @@
+/* =========================================================
+   Indic Typing Studio — Clean, centered, wide keyboard
+   ========================================================= */
+
+/* ---------- Layout ---------- */
+.its-root { display:flex; flex-direction:column; height:100%; gap:8px; }
+
+/* Toolbar */
+.its-toolbar {
+  display:flex; gap:12px; align-items:center; padding:8px;
+  border-bottom:1px solid var(--background-modifier-border);
+}
+.its-toolbar select,
+.its-toolbar input[type="range"],
+.its-toolbar button { height:28px; }
+.its-toolbar select { min-width:220px; }
+.its-toolbar .its-actions { margin-left:auto; display:flex; gap:8px; }
+.its-small { font-size:12px; opacity:.8; }
+
+/* Editor panes */
+.its-panes { display:grid; grid-template-columns: 1fr 1fr; gap:10px; padding:8px; height:100%; }
+.its-pane { display:flex; flex-direction:column; height:100%; }
+.its-pane .label { font-weight:600; margin-bottom:6px; opacity:.8; }
+.its-pane textarea {
+  flex:1; width:100%; height:100%; resize:none;
+  font-family: var(--font-monospace); font-size:14px; padding:10px;
+}
+.its-right textarea { background: var(--background-secondary); }
+
+.its-hidden { display:none; }
+
+/* =========================================================
+   Virtual Keyboard (CENTERED + WIDE + BOXED)
+   ========================================================= */
+
+/* Theme knobs */
+/* ===== Final polish: single-border, compact, centered keyboard ===== */
+
+/* density & sizing */
+:root{
+  --kb-gap: 5px;
+  --kb-key-h: 40px;
+  --kb-radius: 5px;
+  --kb-label: 16px;
+}
+
+/* center the keyboard and rows */
+.its-kb, .its-kb-shell { width: 100%; max-width: none; margin: 0 auto; }
+.its-kb { padding: 10px 0; border-bottom: 1px dashed var(--background-modifier-border); }
+.its-kb-shell { display: flex; flex-direction: column; gap: var(--kb-gap); padding: 12px; }
+.its-kb-row   { display: flex; justify-content: center; align-items: center; gap: var(--kb-gap); width: 100%; }
+
+/* keep ANSI stagger while centered */
+.its-kb-row::before { content:""; flex: 0 0 var(--row-offset, 0px); }
+.its-kb-row.r2 { --row-offset: 12px; }
+.its-kb-row.r3 { --row-offset: 22px; }
+.its-kb-row.r4 { --row-offset: 32px; }
+.its-kb-row.r5 { --row-offset: 42px; }
+
+/* ---- keycaps (single border, no inner square) ---- */
+.its-kb-key{
+  position: relative;
+  min-width: 48px; height: var(--kb-key-h);
+  padding: 0 8px;
+  border-radius: var(--kb-radius);
+  border: 1px solid var(--background-modifier-border);
+  background: linear-gradient(to bottom,
+              color-mix(in oklab, var(--background-secondary) 96%, #000 4%),
+              var(--background-secondary));
+  box-shadow: 0 1px 0 rgba(0,0,0,.06), inset 0 0 0 1px rgba(255,255,255,.03);
+  display: flex; align-items: center; justify-content: center;
+}
+
+/* remove any old debug inner border */
+.its-kb-key::after { content: none !important; }
+
+/* hover/active – tasteful, not loud */
+.its-kb-key:hover { border-color: color-mix(in oklab, var(--interactive-accent) 45%, var(--background-modifier-border)); }
+.its-kb-key[data-active="1"] {
+  outline: 2px solid var(--interactive-accent);
+  outline-offset: 0;
+}
+
+/* labels */
+.its-kb-label{
+  position: absolute; inset: 0;
+  display: flex; align-items: center; justify-content: center;
+  font-size: var(--kb-label); letter-spacing: .15px; opacity: .95;
+}
+.its-kb-key.mod .its-kb-label { font-weight: 600; }
+
+/* specials – compact widths */
+.its-w-backspace { width: 118px; }
+.its-w-tab       { width:  92px; }
+.its-w-caps      { width: 100px; }
+.its-w-enter     { width: 130px; }
+.its-w-shift     { width: 146px; }
+.its-w-space     { width: 480px; }
+
+/* responsive tweak: narrow panes/splits */
+@media (max-width: 400px){
+  .its-w-space { width: 300px; }
+  .its-kb-key  { min-width: 40px; }
+  :root{ --kb-key-h: 40px; --kb-gap: 6px; --kb-label: 16px; }
+}
+
+/* HARD-REMOVE any old debug borders that may still be lingering */
+.its-kb-key { border-color: var(--background-modifier-border) !important; }
+
+
+.its-kb-key { cursor: pointer; }
+.its-kb-key.mod { cursor: pointer; }
+.its-kb-key:active { transform: translateY(1px); }

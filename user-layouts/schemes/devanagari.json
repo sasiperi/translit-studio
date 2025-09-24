@@ -1,0 +1,42 @@
+{
+  "schemaVersion": 1,
+  "id": "devanagari",
+  "label": "devanagari (with Vedic accents)",
+  "map": {
+    "OM": "ॐ",
+    "V_A": "अ", "V_AA": "आ", "V_I": "इ", "V_II": "ई",
+    "V_U": "उ", "V_UU": "ऊ", "V_R": "ऋ", "V_RR": "ॠ",
+    "V_LR": "ऌ", "V_LRR": "ॡ",
+    "V_E": "ए", "V_AI": "ऐ", "V_O": "ओ", "V_AU": "औ",
+
+    "KA": "क", "KHA": "ख", "GA": "ग", "GHA": "घ", "NGA": "ङ",
+    "CHA": "च", "CHHA": "छ", "JA": "ज", "JHA": "झ", "NYA": "ञ",
+    "TTA": "ट", "TTHA": "ठ", "DDA": "ड", "DDHA": "ढ", "NNA": "ण",
+    "TA": "त", "THA": "थ", "DA": "द", "DHA": "ध", "NA": "न",
+    "PA": "प", "PHA": "फ", "BA": "ब", "BHA": "भ", "MA": "म",
+    "YA": "य", "RA": "र", "LA": "ल", "VA": "व",
+    "SHA": "श", "SSA": "ष", "SA": "स", "HA": "ह",
+    "KSSA": "क्ष", "JNA": "ज्ञ",
+
+    "ANUSVARA": "ं", "VISARGA": "ः", "CANDRABINDU": "ँ",
+    "AVAGRAHA": "ऽ", "NUKTA": "़",
+
+    "VS_AA": "ा", "VS_I": "ि", "VS_II": "ी", "VS_U": "ु", "VS_UU": "ू",
+    "VS_R": "ृ", "VS_RR": "ॄ", "VS_LR": "ॢ", "VS_LRR": "ॣ",
+    "VS_E": "े", "VS_AI": "ै", "VS_O": "ो", "VS_AU": "ौ",
+    "VIRAMA": "्",
+
+    "D1": "१", "D2": "२", "D3": "३", "D4": "४", "D5": "५",
+    "D6": "६", "D7": "७", "D8": "८", "D9": "९", "D0": "०",
+
+    "DANDA": "।", "DOUBLE_DANDA": "॥",
+    "RUPEE": "₹", "OMKARA": "ॐ",
+
+    "VEDIC_TONE_UDATTA": "॑",
+    "VEDIC_TONE_ANUDATTA": "॒",
+    "VEDIC_TONE_SVARITA": "ᳲ",
+    "VEDIC_SIGN_TIRYAK": "ꣳ",
+    "VEDIC_SIGN_NICRUT": "꣸",
+    "VEDIC_SIGN_ATIKRAMA": "᳭"
+  }
+}

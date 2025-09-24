@@ -1,0 +1,59 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "KeyboardProfile",
+  "type": "object",
+  "required": ["id", "name", "script", "inputMode", "rows"],
+  "properties": {
+    "id": { "type": "string" },
+    "name": { "type": "string" },
+    "script": { "type": "string" },
+    "inputMode": { "type": "string", "enum": ["scheme", "unicode"] },
+    "baseScheme": { "type": "string" },
+    "rules": {
+      "type": "object",
+      "properties": {
+        "normalizeNfc": { "type": "boolean" },
+        "useZwj": { "type": "boolean" },
+        "defaultVirama": { "type": "string" },
+        "defaultDanda": { "type": "string" },
+        "digitsNative": { "type": "boolean" }
+      },
+      "additionalProperties": false
+    },
+    "rows": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["keys"],
+        "properties": {
+          "keys": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["label"],
+              "properties": {
+                "code": { "type": "string" },
+                "label": { "type": "string" },
+                "insert": { "type": "string" },
+                "variants": {
+                  "type": "array",
+                  "items": { "type": "object", "required": ["label", "insert"],
+                    "properties": { "label": { "type": "string" }, "insert": { "type": "string" } } }
+                },
+                "dead": {
+                  "type": "array",
+                  "items": { "type": "object", "required": ["next", "out"],
+                    "properties": { "next": { "type": "string" }, "out": { "type": "string" } } }
+                },
+                "width": { "type": "number", "minimum": 1 }
+              },
+              "additionalProperties": false
+            }
+          }
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "additionalProperties": false
+}

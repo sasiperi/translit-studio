@@ -1,0 +1,30 @@
+{
+  	"name": "indic-typing-studio",
+  	"version": "1.0.0",
+  	"description": "Type Indic scripts with customizable on-screen keyboards.",
+  	"main": "main.js",
+  	"scripts": {
+  	  	"dev": "node esbuild.config.mjs",
+  	  	"build": "tsc -noEmit -skipLibCheck && node esbuild.config.mjs production",
+  	  	"version": "node version-bump.mjs && git add manifest.json versions.json"
+  	},
+  	"keywords": [],
+  	"author": "",
+  	"license": "MIT",
+  	"devDependencies": {
+  	  	"@codemirror/state": "^6.5.2",
+  	  	"@codemirror/view": "^6.38.1",
+  	  	"@types/electron": "^1.4.38",
+  	  	"@types/node": "^16.11.6",
+  	  	"@types/youtube": "^0.1.2",
+  	  	"builtin-modules": "3.3.0",
+  	  	"esbuild": "^0.25.8",
+  	  	"obsidian": "latest",
+  	  	"tslib": "2.4.0",
+  	  	"typescript": "4.7.4"
+  	},
+  	"dependencies": {
+  	  	"@indic-transliteration/sanscript": "^1.3.3",
+  	  	"zod": "^3.23.8"
+  	}
+}

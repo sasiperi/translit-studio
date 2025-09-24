@@ -1,0 +1,42 @@
+{
+  "schemaVersion": 1,
+  "id": "itrans",
+  "label": "itrans (with Vedic accents)",
+  "map": {
+    "OM": "OM",
+    "V_A": "a", "V_AA": "A", "V_I": "i", "V_II": "I",
+    "V_U": "u", "V_UU": "U", "V_R": "RRi", "V_RR": "RRI",
+    "V_LR": "LLi", "V_LRR": "LLI",
+    "V_E": "e", "V_AI": "ai", "V_O": "o", "V_AU": "au",
+
+    "KA": "ka", "KHA": "kha", "GA": "ga", "GHA": "gha", "NGA": "~Na",
+    "CHA": "cha", "CHHA": "Cha", "JA": "ja", "JHA": "jha", "NYA": "~na",
+    "TTA": "Ta", "TTHA": "Tha", "DDA": "Da", "DDHA": "Dha", "NNA": "Na",
+    "TA": "ta", "THA": "tha", "DA": "da", "DHA": "dha", "NA": "na",
+    "PA": "pa", "PHA": "pha", "BA": "ba", "BHA": "bha", "MA": "ma",
+    "YA": "ya", "RA": "ra", "LA": "la", "VA": "va",
+    "SHA": "sha", "SSA": "Sha", "SA": "sa", "HA": "ha",
+    "KSSA": "kSha", "JNA": "j~na",
+
+    "ANUSVARA": "M", "VISARGA": "H", "CANDRABINDU": ".N",
+    "AVAGRAHA": ".a", "NUKTA": "़",
+
+    "VS_AA": "A", "VS_I": "i", "VS_II": "I", "VS_U": "u", "VS_UU": "U",
+    "VS_R": "RRi", "VS_RR": "RRI", "VS_LR": "LLi", "VS_LRR": "LLI",
+    "VS_E": "e", "VS_AI": "ai", "VS_O": "o", "VS_AU": "au",
+    "VIRAMA": "",
+
+    "D1": "1", "D2": "2", "D3": "3", "D4": "4", "D5": "5",
+    "D6": "6", "D7": "7", "D8": "8", "D9": "9", "D0": "0",
+
+    "DANDA": "|", "DOUBLE_DANDA": "||",
+    "RUPEE": "₹", "OMKARA": "OM",
+
+    "VEDIC_TONE_UDATTA": "'",
+    "VEDIC_TONE_ANUDATTA": "_",
+    "VEDIC_TONE_SVARITA": "ᳲ",
+    "VEDIC_SIGN_TIRYAK": "ꣳ",
+    "VEDIC_SIGN_NICRUT": "꣸",
+    "VEDIC_SIGN_ATIKRAMA": "᳭"
+  }
+}

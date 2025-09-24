@@ -1,0 +1,63 @@
+{
+  "schemaVersion": 1,
+  "id": "ansi-4row",
+  "label": "ANSI keyboard — 4 layers (base/Shift/Alt/Alt+Shift), scheme-agnostic",
+  "keys": {
+    
+    "Backquote": { "base": "VS_E_SHORT", "shift": "~", "alt": "", "altShift": "" },
+    "Digit1":    { "base": "D1", "shift": "!", "alt": "", "altShift": "" },
+    "Digit2":    { "base": "D2", "shift": "@", "alt": "", "altShift": "" },
+    "Digit3":    { "base": "D3", "shift": "#", "alt": "", "altShift": "" },
+    "Digit4":    { "base": "D4", "shift": "$", "alt": "", "altShift": "" },
+    "Digit5":    { "base": "D5", "shift": "%", "alt": "", "altShift": "" },
+    "Digit6":    { "base": "D6", "shift": "^", "alt": "", "altShift": "" },
+    "Digit7":    { "base": "D7", "shift": "&", "alt": "", "altShift": "" },
+    "Digit8":    { "base": "D8", "shift": "*", "alt": "", "altShift": "" },
+    "Digit9":    { "base": "D9", "shift": "(", "alt": "", "altShift": "" },
+    "Digit0":    { "base": "D0", "shift": ")", "alt": "", "altShift": "" },
+    "Minus":     { "base": "HYPHEN", "shift": "_", "alt": "", "altShift": "" },
+    "Equal":     { "base": "EQUAL",  "shift": "+", "alt": "", "altShift": "" },
+
+    
+    "KeyQ":         { "base": "VS_CANDRA_A", "shift": "VS_CANDRA_O",   "alt": "V_CANDRA_E",   "altShift": "V_CANDRA_O" },
+    "KeyW":         { "base": "V_A",         "shift": "V_AA",          "alt": "",             "altShift": "" },
+    "KeyE":         { "base": "VS_E",        "shift": "VS_AI",         "alt": "V_E",          "altShift": "V_AI" },
+    "KeyR":         { "base": "RA",          "shift": "VS_R",          "alt": "V_R",          "altShift": "V_RR" },
+    "KeyT":         { "base": "TA",          "shift": "THA",           "alt": "TTA",          "altShift": "TTHA" },
+    "KeyY":         { "base": "YA",          "shift": "YA_DOTTED",     "alt": "YA_DOTTED",    "altShift": "" },
+    "KeyU":         { "base": "VS_U",        "shift": "VS_UU",         "alt": "V_U",          "altShift": "V_UU" },
+    "KeyI":         { "base": "VS_I",        "shift": "VS_II",         "alt": "V_I",          "altShift": "V_II" },
+    "KeyO":         { "base": "VS_O",        "shift": "VS_AU",         "alt": "V_O",          "altShift": "V_AU" },
+    "KeyP":         { "base": "PA",          "shift": "PHA",           "alt": "VEDIC_ARTHA",  "altShift": "" },
+    "BracketLeft":  { "base": "ABBREV_SIGN", "shift": "[",             "alt": "[",            "altShift": "{" },
+    "BracketRight": { "base": "CURRENCY_RUPEE", "shift": "]",          "alt": "]",            "altShift": "}" },
+    "Backslash":    { "base": "CURRENCY_RUPEE", "shift": "V_O_CANDRA", "alt": "BACKSLASH",    "altShift": "PIPE" },
+
+    
+    "KeyA":       { "base": "VS_AA", "shift": "VS_AA", "alt": "V_A",   "altShift": "V_AA" },
+    "KeyS":       { "base": "SA",    "shift": "SHA",   "alt": "SHRA",  "altShift": "SSA" },
+    "KeyD":       { "base": "DA",    "shift": "DHA",   "alt": "DDA",   "altShift": "DDHA" },
+    "KeyF":       { "base": "VIRAMA","shift": "NUKTA", "alt": "NUKTA", "altShift": "VEDIC_DBL_SVARITA" },
+    "KeyG":       { "base": "GA",    "shift": "GHA",   "alt": "",      "altShift": "" },
+    "KeyH":       { "base": "HA",    "shift": "VISARGA","alt": "",     "altShift": "" },
+    "KeyJ":       { "base": "JA",    "shift": "JHA",   "alt": "JNYA",  "altShift": "ZHA" },
+    "KeyK":       { "base": "KA",    "shift": "KHA",   "alt": "V_VOCALIC_LL",  "altShift": "VS_VOCALIC_L" },
+    "KeyL":       { "base": "LA",    "shift": "LLA",   "alt": "LLA",   "altShift": "VS_VOCALIC_LL" },
+    "Semicolon":  { "base": ";",     "shift": ":",     "alt": ";",     "altShift": ":" },
+    "Quote":      { "base": "`",     "shift": "\"",    "alt": "AVAGRAHA", "altShift": "\"" },
+
+    
+    "KeyZ":     { "base": "NGA",  "shift": "CHANDRABINDU", "alt": "VEDIC_ANUDATTA", "altShift": "V_O_CANDRA" },
+    "KeyX":     { "base": "SSA",  "shift": "KSHA",         "alt": "VEDIC_UDATTA",   "altShift": "" },
+    "KeyC":     { "base": "CA",   "shift": "CHA",          "alt": "QUOTE",          "altShift": "" },
+    "KeyV":     { "base": "VA",   "shift": "",             "alt": "VEDIC_PUSHP",    "altShift": "" },
+    "KeyB":     { "base": "BA",   "shift": "BHA",          "alt": "VEDIC_CB_VIRAMA","altShift": "" },
+    "KeyN":     { "base": "NA",   "shift": "NNA",          "alt": "NYA",            "altShift": "NNNA" },
+    "KeyM":     { "base": "MA",   "shift": "ANUSVARA",     "alt": "CHANDRABINDU",   "altShift": "OM" },
+    "Comma":    { "base": ",",    "shift": "<",            "alt": "",               "altShift": "" },
+    "Period":   { "base": "DANDA","shift": ">",            "alt": "FULL_STOP",      "altShift": "DOUBLE_DANDA" },
+    "Slash":    { "base": "/",    "shift": "?",            "alt": "",               "altShift": "" }
+
+    
+  }
+}

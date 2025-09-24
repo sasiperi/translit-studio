@@ -1,0 +1,11 @@
+{
+	"id": "translit-studio",
+  	"name": "Translit Studio",
+  	"version": "0.1.0",
+  	"minAppVersion": "1.6.0",
+    "description": "Type indic scripts with customizable on-screen keyboards.",
+	"author": "Anant Upadhyayula",
+	"authorUrl": "https://fourthquest.com/",
+	"fundingUrl": "https://github.com/sponsors/sasiperi?frequency=one-time",
+	"isDesktopOnly": true
+}
