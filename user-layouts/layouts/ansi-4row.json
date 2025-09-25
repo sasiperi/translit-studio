@@ -35,9 +35,9 @@
 
     
     "KeyA":       { "base": "VS_A", "shift": "VS_AA", "alt": "V_A",   "altShift": "V_AA" },
-    "KeyS":       { "base": "SA",    "shift": "SHA",   "alt": "SRA",  "altShift": "SHRA" },
+    "KeyS":       { "base": "SA_HAL",  "shift": "SSA_HAL", "alt": "SHA_HAL", "altShift": "SHA_HAL" },
     "KeyD":       { "base": "DA",    "shift": "DHA",   "alt": "DDA",   "altShift": "DDHA" },
-    "KeyF":       { "base": "VIRAMA","shift": "NUKTA", "alt": "NUKTA", "altShift": "VEDIC_DBL_SVARITA" },
+    "KeyF":       { "base": "PHA_HAL","shift": "NUKTA", "alt": "NUKTA", "altShift": "VEDIC_DBL_SVARITA" },
     "KeyG":       { "base": "GA",    "shift": "GHA",   "alt": "",      "altShift": "" },
     "KeyH":       { "base": "HA",    "shift": "VISARGA","alt": "",     "altShift": "" },
     "KeyJ":       { "base": "JA",    "shift": "JHA",   "alt": "JNYA",  "altShift": "ZHA" },

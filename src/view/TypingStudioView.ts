@@ -1,5 +1,7 @@
 // src/view/TypingStudioView.ts
-import { ItemView, WorkspaceLeaf } from "obsidian";
+//import { ItemView, WorkspaceLeaf } from "obsidian";
+import { ItemView, WorkspaceLeaf, Notice, normalizePath, TFile } from "obsidian";
+
 import {
   loadUserData,
   type LoadedData,
@@ -121,6 +123,7 @@ export class TypingStudioView extends ItemView {
   async onOpen() {
     const { containerEl } = this;
     containerEl.empty();
+    
 
     /* -------- Build static DOM first -------- */
     this.rootEl = containerEl.createDiv({ cls: "its-root" });
@@ -169,6 +172,11 @@ export class TypingStudioView extends ItemView {
     rightPane.createDiv({ cls: "label", text: "Right: Live output (target script)" });
     this.rightEl = rightPane.createEl("textarea");
     this.rightEl.readOnly = true;
+
+    const actions = this.toolbarEl.createDiv({ cls: "its-actions" });
+    const exportBtn = actions.createEl("button", { text: "Export to note" });
+    exportBtn.onclick = () => this.exportRightToNote();
+
 
     /* -------- Load user data & choose layout/scheme -------- */
     this.data = await loadUserData(this.app, this.plugin.settings.userLayoutsFolder || "user-layouts");
@@ -366,6 +374,47 @@ export class TypingStudioView extends ItemView {
 
   /* ── Helpers ───────────────────────────────────────────── */
 
+  private async ensureFolder(folder: string): Promise<string> {
+  const base = normalizePath(folder || "Indic-Typing");
+  const parts = base.split("/").filter(Boolean);
+  let acc = "";
+  for (const p of parts) {
+    acc = acc ? `${acc}/${p}` : p;
+    if (!(await this.app.vault.adapter.exists(acc))) {
+      await this.app.vault.createFolder(acc);
+    }
+  }
+  return base;
+}
+
+private async uniquePath(p: string): Promise<string> {
+  const adapter = this.app.vault.adapter;
+  let path = normalizePath(p);
+  if (!(await adapter.exists(path))) return path;
+  const dot = path.lastIndexOf(".");
+  const ext = dot >= 0 ? path.slice(dot) : "";
+  const stem = dot >= 0 ? path.slice(0, dot) : path;
+  let i = 2;
+  while (await adapter.exists(`${stem} ${i}${ext}`)) i++;
+  return `${stem} ${i}${ext}`;
+}
+
+private async exportRightToNote(): Promise<void> {
+  const body = this.rightEl?.value ?? "";
+  if (!body.trim()) { new Notice("Nothing to export."); return; }
+
+  const folder = await this.ensureFolder(this.plugin.settings.exportFolder || "Indic-Typing");
+  const stamp  = new Date().toISOString().slice(0,19).replace(/[:T]/g,"-");
+  const path   = await this.uniquePath(`${folder}/Typing-${stamp}.md`);
+
+  const file = await this.app.vault.create(path, body + "\n");
+  new Notice(`Exported → ${path}`);
+
+  const leaf = this.app.workspace.getLeaf(true);
+  await leaf.openFile(file as TFile);
+}
+
+
   private rebuildAndApplyLabels(): void {
     const useOutput = this.labelMode === "output";
     const outId =
@@ -389,41 +438,53 @@ export class TypingStudioView extends ItemView {
   }
 
   /** Map layout tokens via a scheme; if missing, try ITRANS->Sanscript(target); else show token. */
-  private buildLabelKeymapWithFallback(
-    layout: Keymap,
-    scheme: SchemeMap | null,
-    outputTarget: string
-  ): LabelKeymap {
-    const out: LabelKeymap = {};
-    const itrans = this.data.schemes.get("itrans") ?? null;
-    const canTranslit = !!(itrans && (Sanscript as any)?.t && outputTarget);
+  /** Map layout tokens via a scheme; if missing, try ITRANS→Sanscript(target); else hide noisy IDs. */
+private buildLabelKeymapWithFallback(
+  layout: Keymap,
+  scheme: SchemeMap | null,
+  outputTarget: string
+): LabelKeymap {
+  const out: LabelKeymap = {};
+  const itrans = this.data.schemes.get("itrans") ?? null;
+  const canTranslit = !!(itrans && (Sanscript as any)?.t && outputTarget);
 
-    const mapOne = (token?: string): string => {
-      if (!token) return "";
-      const direct = scheme?.[token];
-      if (direct) return direct;
-      if (canTranslit) {
-        const roman = itrans?.[token];
-        if (roman) {
-          try { return (Sanscript as any).t(roman, "itrans", outputTarget); } catch {}
-        }
+  const mapOne = (token?: string): string => {
+    if (!token) return "";
+
+    // 1) Direct glyph from the selected scheme
+    const direct = scheme?.[token];
+    if (direct) return direct;
+
+    // 2) Fallback via ITRANS → Sanscript(target), if we have a roman for this token
+    if (canTranslit) {
+      const roman = itrans?.[token];
+      if (roman) {
+        try { return (Sanscript as any).t(roman, "itrans", outputTarget); } catch {}
       }
-      return token;
-    };
-
-    for (const [code, layers] of Object.entries(layout)) {
-      out[code] = {
-        base: mapOne(layers.base),
-        shift: mapOne(layers.shift),
-        alt: mapOne(layers.alt),
-        altShift: mapOne(layers.altShift),
-        ctrl: mapOne(layers.ctrl),
-        ctrlShift: mapOne(layers.ctrlShift),
-        label: layers.label ? mapOne(layers.label) : undefined,
-      };
     }
-    return out;
+
+    // 3) Still unresolved: hide “noisy” IDs (tokens that look like constants)
+    //    Examples: VS_E_SHORT, VEDIC_ANUDATTA, CHANDRABINDU, etc.
+    if (token.includes("_") || /^[A-Z0-9]{3,}$/.test(token)) return "";
+
+    // 4) Otherwise keep short human-ish tokens like "aa", "kh", etc.
+    return token;
+  };
+
+  for (const [code, layers] of Object.entries(layout)) {
+    out[code] = {
+      base:      mapOne(layers.base),
+      shift:     mapOne(layers.shift),
+      alt:       mapOne(layers.alt),
+      altShift:  mapOne(layers.altShift),
+      ctrl:      mapOne(layers.ctrl),
+      ctrlShift: mapOne(layers.ctrlShift),
+      label:     layers.label ? mapOne(layers.label) : undefined,
+    };
   }
+  return out;
+}
+
 
   private buildLabelKeymap(layout: Keymap, scheme: SchemeMap | null): LabelKeymap {
     const out: LabelKeymap = {};
