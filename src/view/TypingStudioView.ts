@@ -99,6 +99,8 @@ export class TypingStudioView extends ItemView {
   private currentSchemeId = "itrans";        // scheme id (from schemes/*.json)
   private currentScheme: SchemeMap | null = null; // PHONEME_ID -> token
   private currentLabelKeymap: LabelKeymap = {};   // labels shown on keys
+  labelModeSel!: HTMLSelectElement;  // "input" | "output"
+  private labelMode: "input" | "output" = "input";
 
   constructor(public leaf: WorkspaceLeaf, private plugin: any) {
     super(leaf);
@@ -139,7 +141,7 @@ export class TypingStudioView extends ItemView {
     this.currentScheme = this.data.schemes.get(this.currentSchemeId) ?? null;
 
     // Build initial label keymap
-    this.currentLabelKeymap = this.buildLabelKeymap(this.currentLayoutPhonemes, this.currentScheme);
+    this.rebuildAndApplyLabels();
 
     /* UI */
     this.rootEl = containerEl.createDiv({ cls: "its-root" });
@@ -173,14 +175,14 @@ export class TypingStudioView extends ItemView {
         if (id === this.currentSchemeId) o.selected = true;
       }
       this.inputSel.onchange = async () => {
-        this.currentSchemeId = this.inputSel.value;
-        this.plugin.settings.defaultInputScheme = this.currentSchemeId;
-        await this.plugin.saveSettings();
-        this.currentScheme = this.data.schemes.get(this.currentSchemeId) ?? null;
-        this.currentLabelKeymap = this.buildLabelKeymap(this.currentLayoutPhonemes, this.currentScheme);
-        this.applyKeymapLabels(this.currentLabelKeymap);
-        this.fullConvert();
-      };
+      this.currentSchemeId = this.inputSel.value;
+      this.plugin.settings.defaultInputScheme = this.currentSchemeId;
+      await this.plugin.saveSettings();
+      this.currentScheme = this.data.schemes.get(this.currentSchemeId) ?? null;
+      this.rebuildAndApplyLabels();
+      this.fullConvert();
+    };
+
     }
 
     // Output selector (Sanscript targets)
@@ -190,11 +192,26 @@ export class TypingStudioView extends ItemView {
       const o = this.outputSel.createEl("option", { text: s, value: s });
       if (s === this.plugin.settings.defaultOutputScript) o.selected = true;
     }
-    this.outputSel.onchange = async () => {
-      this.plugin.settings.defaultOutputScript = this.outputSel.value;
-      await this.plugin.saveSettings();
-      this.fullConvert();
+    // Label mode: input vs output
+    this.toolbarEl.createSpan({ text: " labels:", cls: "its-small" });
+    this.labelModeSel = this.toolbarEl.createEl("select");
+    [{v:"input", t:"input"}, {v:"output", t:"output"}].forEach(o => {
+      const opt = this.labelModeSel.createEl("option", { value: o.v, text: o.t });
+      if (o.v === this.labelMode) opt.selected = true;
+    });
+    this.labelModeSel.onchange = () => {
+      this.labelMode = (this.labelModeSel.value as any);
+      this.rebuildAndApplyLabels();
     };
+
+
+    this.outputSel.onchange = async () => {
+    this.plugin.settings.defaultOutputScript = this.outputSel.value;
+    await this.plugin.saveSettings();
+    this.rebuildAndApplyLabels();
+    this.fullConvert();
+  };
+
 
     // Keyboard shell + labels
     this.keyboardEl = this.rootEl.createDiv({ cls: "its-kb" });
@@ -324,6 +341,68 @@ export class TypingStudioView extends ItemView {
   async onClose() {}
 
   /* ── Helpers ───────────────────────────────────────────── */
+
+  private rebuildAndApplyLabels(): void {
+  const forOutput = this.labelMode === "output";
+  let schemeForLabels: SchemeMap | null = null;
+
+  if (forOutput) {
+    // Prefer a user-provided scheme with same id as the output (e.g., "telugu", "devanagari")
+    schemeForLabels = this.data.schemes.get(this.outputSel?.value || "") ?? null;
+  } else {
+    schemeForLabels = this.currentScheme; // input scheme
+  }
+
+  this.currentLabelKeymap = this.buildLabelKeymapWithFallback(
+    this.currentLayoutPhonemes,
+    schemeForLabels,
+    this.outputSel?.value || ""
+  );
+  this.applyKeymapLabels(this.currentLabelKeymap);
+}
+
+/** Map layout tokens to labels via a scheme; if missing, try ITRANS→Sanscript to the target. */
+private buildLabelKeymapWithFallback(
+  layout: Keymap,
+  scheme: SchemeMap | null,
+  outputTarget: string
+): LabelKeymap {
+  const out: LabelKeymap = {};
+  const itrans = this.data.schemes.get("itrans") ?? null;
+  const canTranslit = !!(itrans && (Sanscript as any)?.t && outputTarget);
+
+  const mapOne = (token?: string): string => {
+    if (!token) return "";
+    // 1) direct scheme map (best)
+    const s1 = scheme?.[token];
+    if (s1) return s1;
+    // 2) fallback: token -> ITRANS -> Sanscript to output (works when no scheme exists for output)
+    if (canTranslit) {
+      const base = itrans![token];
+      if (base) {
+        try { return (Sanscript as any).t(base, "itrans", outputTarget); }
+        catch { /* fall through */ }
+      }
+    }
+    // 3) last resort: show the token itself
+    return token;
+  };
+
+  for (const [code, layers] of Object.entries(layout)) {
+    const lab: KeyLayers = {
+      base: mapOne(layers.base),
+      shift: mapOne(layers.shift),
+      alt: mapOne(layers.alt),
+      altShift: mapOne(layers.altShift),
+      ctrl: mapOne(layers.ctrl),
+      ctrlShift: mapOne(layers.ctrlShift),
+      label: layers.label ? mapOne(layers.label) : undefined,
+    };
+    out[code] = lab;
+  }
+  return out;
+}
+
 
   private buildLabelKeymap(layout: Keymap, scheme: SchemeMap | null): LabelKeymap {
     const out: LabelKeymap = {};

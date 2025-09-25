@@ -1,5 +1,5 @@
 {
-  	"name": "indic-typing-studio",
+  	"name": "translit-studio",
   	"version": "1.0.0",
   	"description": "Type Indic scripts with customizable on-screen keyboards.",
   	"main": "main.js",

@@ -21,7 +21,7 @@
     
     "KeyQ":         { "base": "VS_CANDRA_A", "shift": "VS_CANDRA_O",   "alt": "V_CANDRA_E",   "altShift": "V_CANDRA_O" },
     "KeyW":         { "base": "V_A",         "shift": "V_AA",          "alt": "",             "altShift": "" },
-    "KeyE":         { "base": "VS_E",        "shift": "VS_AI",         "alt": "V_E",          "altShift": "V_AI" },
+    "KeyE":         { "base": "V_E",        "shift": "V_EE",         "alt": "V_AI",          "altShift": "V_AI" },
     "KeyR":         { "base": "RA",          "shift": "VS_R",          "alt": "V_R",          "altShift": "V_RR" },
     "KeyT":         { "base": "TA",          "shift": "THA",           "alt": "TTA",          "altShift": "TTHA" },
     "KeyY":         { "base": "YA",          "shift": "YA_DOTTED",     "alt": "YA_DOTTED",    "altShift": "" },
@@ -34,8 +34,8 @@
     "Backslash":    { "base": "CURRENCY_RUPEE", "shift": "V_O_CANDRA", "alt": "BACKSLASH",    "altShift": "PIPE" },
 
     
-    "KeyA":       { "base": "VS_AA", "shift": "VS_AA", "alt": "V_A",   "altShift": "V_AA" },
-    "KeyS":       { "base": "SA",    "shift": "SHA",   "alt": "SHRA",  "altShift": "SSA" },
+    "KeyA":       { "base": "VS_A", "shift": "VS_AA", "alt": "V_A",   "altShift": "V_AA" },
+    "KeyS":       { "base": "SA",    "shift": "SHA",   "alt": "SRA",  "altShift": "SHRA" },
     "KeyD":       { "base": "DA",    "shift": "DHA",   "alt": "DDA",   "altShift": "DDHA" },
     "KeyF":       { "base": "VIRAMA","shift": "NUKTA", "alt": "NUKTA", "altShift": "VEDIC_DBL_SVARITA" },
     "KeyG":       { "base": "GA",    "shift": "GHA",   "alt": "",      "altShift": "" },
