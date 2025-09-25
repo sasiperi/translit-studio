@@ -1,8 +1,4 @@
-/* =========================================================
-   Indic Typing Studio — Clean, centered, wide keyboard
-   ========================================================= */
 
-/* ---------- Layout ---------- */
 .its-root { display:flex; flex-direction:column; height:100%; gap:8px; }
 
 /* Toolbar */
@@ -111,3 +107,117 @@
 .its-kb-key { cursor: pointer; }
 .its-kb-key.mod { cursor: pointer; }
 .its-kb-key:active { transform: translateY(1px); }
+
+/* Key hover tooltip showing "input → output" */
+.its-kb-key[data-tip] { position: relative; }
+.its-kb-key[data-tip]:hover::after {
+  content: attr(data-tip);
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translate(-50%, -6px);
+  padding: 6px 8px;
+  font-size: 12px;
+  white-space: nowrap;
+  color: var(--text-normal);
+  background: var(--background-primary);
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 6px;
+  box-shadow: 0 6px 18px rgba(0,0,0,.18);
+  z-index: 20;
+}
+.its-kb-key[data-tip]:hover::before {
+  content: "";
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translate(-50%, 2px);
+  border: 6px solid transparent;
+  border-top-color: var(--background-modifier-border);
+}
+
+/* floating hover card */
+.its-tip {
+  position: absolute;
+  max-width: 520px;
+  padding: 8px 10px;
+  background: var(--background-primary);
+  color: var(--text-normal);
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 8px;
+  box-shadow: 0 8px 24px rgba(0,0,0,.18);
+  z-index: 9999;
+  pointer-events: none;
+  font-size: 12px;
+}
+.its-hidden { display: none !important; }
+.itstip-head { font-weight: 600; opacity: .8; margin-bottom: 4px; }
+.itstip-main { margin-bottom: 6px; }
+.itstip-grid { border-collapse: collapse; }
+.itstip-grid th, .itstip-grid td {
+  border-top: 1px solid var(--background-modifier-border);
+  padding: 2px 6px;
+}
+.itstip-grid th { text-align: left; opacity: .8; }
+.itstip-grid td.tok { font-family: var(--font-monospace); opacity: .9; }
+
+.its-tip {
+  position: fixed;
+  max-width: 520px;
+  padding: 8px 10px;
+  background: var(--background-primary);
+  color: var(--text-normal);
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 8px;
+  box-shadow: 0 8px 24px rgba(0,0,0,.18);
+  z-index: 9999;
+  pointer-events: none;
+  font-size: 12px;
+}
+.its-hidden { display: none !important; }
+.itstip-head { font-weight: 600; opacity: .8; margin-bottom: 4px; }
+.itstip-main { margin-bottom: 6px; }
+.itstip-grid { border-collapse: collapse; }
+.itstip-grid th, .itstip-grid td {
+  border-top: 1px solid var(--background-modifier-border);
+  padding: 2px 6px;
+}
+.itstip-grid th { text-align: left; opacity: .8; }
+.itstip-grid td.tok { font-family: var(--font-monospace); opacity: .9; }
+
+.its-tip {
+  position: fixed;
+  max-width: 440px;
+  padding: 8px 10px;
+  background: var(--background-primary);
+  color: var(--text-normal);
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 8px;
+  box-shadow: 0 8px 24px rgba(0,0,0,.18);
+  z-index: 9999;
+  pointer-events: none;
+  font-size: 12px;
+}
+.its-hidden { display: none !important; }
+
+.its-tip .pill {
+  display: inline-block;
+  padding: 0 6px;
+  margin: 0 4px;
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 999px;
+  font-size: 11px;
+  line-height: 1.6;
+}
+
+.itstip-main { margin-bottom: 6px; }
+
+.itstip-rows { display: grid; gap: 2px; }
+.itstip-row {
+  display: grid;
+  grid-template-columns: 48px 1fr 1fr; /* layer | input | output */
+  gap: 8px;
+  align-items: center;
+}
+.itstip-row .ly { opacity: .65; }
+.itstip-row .in, .itstip-row .out { min-width: 0; }

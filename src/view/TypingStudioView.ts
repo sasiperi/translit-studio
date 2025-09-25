@@ -65,7 +65,7 @@ const STATIC_LABELS: Record<string, string> = {
   Space: "⎵",
 };
 
-type LabelKeymap = Keymap; // same shape; values are already mapped labels
+type LabelKeymap = Keymap;
 
 export class TypingStudioView extends ItemView {
   /* DOM */
@@ -80,11 +80,12 @@ export class TypingStudioView extends ItemView {
   outputSel!: HTMLSelectElement;  // Sanscript targets
   showKbChk!: HTMLInputElement;
   imeModeChk!: HTMLInputElement;
+  labelModeSel!: HTMLSelectElement; // "input" | "output"
 
   /* State */
   private labelRefs: Map<string, HTMLElement> = new Map();
   private mod = { shift: false, alt: false, ctrl: false };
-  private vmod = { shift: false, alt: false, ctrl: false }; // sticky via mouse
+  private vmod = { shift: false, alt: false, ctrl: false };
   private idleTimer: number | null = null;
   private lastInputAt = 0;
 
@@ -94,13 +95,20 @@ export class TypingStudioView extends ItemView {
     layouts: new Map<string, any>(),
   };
 
-  private currentLayoutId = "ansi-4row";     // physical layout id (from layouts/*.json)
-  private currentLayoutPhonemes: Keymap = {}; // KeyEvent.code -> { base/shift/...: PHONEME_ID }
-  private currentSchemeId = "itrans";        // scheme id (from schemes/*.json)
-  private currentScheme: SchemeMap | null = null; // PHONEME_ID -> token
-  private currentLabelKeymap: LabelKeymap = {};   // labels shown on keys
-  labelModeSel!: HTMLSelectElement;  // "input" | "output"
+  private currentLayoutId = "ansi-4row";
+  private currentLayoutPhonemes: Keymap = {};
+  private currentSchemeId = "itrans";
+  private currentScheme: SchemeMap | null = null;
+  private currentLabelKeymap: LabelKeymap = {};
+
+  // label mode + tooltips
   private labelMode: "input" | "output" = "input";
+  private inputLabelKeymap: LabelKeymap = {};
+  private outputLabelKeymap: LabelKeymap = {};
+  private tipEl: HTMLElement | null = null;
+  private hoveredCode: string | null = null;
+  private tipTimer: number | null = null;
+
 
   constructor(public leaf: WorkspaceLeaf, private plugin: any) {
     super(leaf);
@@ -114,36 +122,7 @@ export class TypingStudioView extends ItemView {
     const { containerEl } = this;
     containerEl.empty();
 
-    /* Load user data from disk */
-    this.data = await loadUserData(this.app, this.plugin.settings.userLayoutsFolder || "user-layouts");
-    
-
-    // Choose a layout (prefer ansi-4row, else first available with .keys)
-    if (this.data.layouts.has("ansi-4row")) {
-      this.currentLayoutId = "ansi-4row";
-    } else if (this.data.layouts.size) {
-      this.currentLayoutId = Array.from(this.data.layouts.keys())[0]!;
-    }
-
-    const layoutObj = this.data.layouts.get(this.currentLayoutId);
-    const layoutKeys: Keymap | undefined = layoutObj?.keys;
-    this.currentLayoutPhonemes = normalizeKeymap(layoutKeys || {}); // safe: {} if missing
-
-    // Choose scheme (from settings or first available)
-    const availableSchemes = Array.from(this.data.schemes.keys()).sort();
-    if (availableSchemes.length) {
-      this.currentSchemeId = availableSchemes.includes(this.plugin.settings.defaultInputScheme)
-        ? this.plugin.settings.defaultInputScheme
-        : availableSchemes[0]!;
-    } else {
-      this.currentSchemeId = this.plugin.settings.defaultInputScheme || "itrans";
-    }
-    this.currentScheme = this.data.schemes.get(this.currentSchemeId) ?? null;
-
-    // Build initial label keymap
-    this.rebuildAndApplyLabels();
-
-    /* UI */
+    /* -------- Build static DOM first -------- */
     this.rootEl = containerEl.createDiv({ cls: "its-root" });
     this.toolbarEl = this.rootEl.createDiv({ cls: "its-toolbar" });
 
@@ -156,34 +135,10 @@ export class TypingStudioView extends ItemView {
     this.showKbChk = this.toolbarEl.createEl("input", { type: "checkbox" }) as HTMLInputElement;
     this.showKbChk.checked = !!this.plugin.settings.showKeyboardByDefault;
     this.toolbarEl.createSpan({ text: " show keyboard", cls: "its-small" });
-    this.showKbChk.onchange = () => {
-      this.keyboardEl.toggleClass("its-hidden", !this.showKbChk.checked);
-      this.plugin.settings.showKeyboardByDefault = this.showKbChk.checked;
-      this.plugin.saveSettings();
-    };
 
-    // Input (schemes) selector — only from user JSON
+    // Input selector placeholder (populated after loading)
     this.toolbarEl.createSpan({ text: " input:", cls: "its-small" });
     this.inputSel = this.toolbarEl.createEl("select");
-    if (availableSchemes.length === 0) {
-      // indicate empty state
-      this.inputSel.createEl("option", { value: "", text: "(no schemes found)" });
-      this.inputSel.disabled = true;
-    } else {
-      for (const id of availableSchemes) {
-        const o = this.inputSel.createEl("option", { text: id, value: id });
-        if (id === this.currentSchemeId) o.selected = true;
-      }
-      this.inputSel.onchange = async () => {
-      this.currentSchemeId = this.inputSel.value;
-      this.plugin.settings.defaultInputScheme = this.currentSchemeId;
-      await this.plugin.saveSettings();
-      this.currentScheme = this.data.schemes.get(this.currentSchemeId) ?? null;
-      this.rebuildAndApplyLabels();
-      this.fullConvert();
-    };
-
-    }
 
     // Output selector (Sanscript targets)
     this.toolbarEl.createSpan({ text: " → output:", cls: "its-small" });
@@ -192,33 +147,18 @@ export class TypingStudioView extends ItemView {
       const o = this.outputSel.createEl("option", { text: s, value: s });
       if (s === this.plugin.settings.defaultOutputScript) o.selected = true;
     }
-    // Label mode: input vs output
+
+    // Label mode
     this.toolbarEl.createSpan({ text: " labels:", cls: "its-small" });
     this.labelModeSel = this.toolbarEl.createEl("select");
-    [{v:"input", t:"input"}, {v:"output", t:"output"}].forEach(o => {
+    [{ v: "input", t: "input" }, { v: "output", t: "output" }].forEach(o => {
       const opt = this.labelModeSel.createEl("option", { value: o.v, text: o.t });
       if (o.v === this.labelMode) opt.selected = true;
     });
-    this.labelModeSel.onchange = () => {
-      this.labelMode = (this.labelModeSel.value as any);
-      this.rebuildAndApplyLabels();
-    };
 
-
-    this.outputSel.onchange = async () => {
-    this.plugin.settings.defaultOutputScript = this.outputSel.value;
-    await this.plugin.saveSettings();
-    this.rebuildAndApplyLabels();
-    this.fullConvert();
-  };
-
-
-    // Keyboard shell + labels
+    // Keyboard container
     this.keyboardEl = this.rootEl.createDiv({ cls: "its-kb" });
     if (!this.showKbChk.checked) this.keyboardEl.addClass("its-hidden");
-    this.mountKeyboardShell();
-    this.cacheLabelRefs();
-    this.applyKeymapLabels(this.currentLabelKeymap);
 
     // Panes
     this.panesEl = this.rootEl.createDiv({ cls: "its-panes" });
@@ -230,6 +170,81 @@ export class TypingStudioView extends ItemView {
     this.rightEl = rightPane.createEl("textarea");
     this.rightEl.readOnly = true;
 
+    /* -------- Load user data & choose layout/scheme -------- */
+    this.data = await loadUserData(this.app, this.plugin.settings.userLayoutsFolder || "user-layouts");
+
+    if (this.data.layouts.has("ansi-4row")) {
+      this.currentLayoutId = "ansi-4row";
+    } else if (this.data.layouts.size) {
+      this.currentLayoutId = Array.from(this.data.layouts.keys())[0]!;
+    }
+
+    const layoutObj = this.data.layouts.get(this.currentLayoutId);
+    const layoutKeys: Keymap | undefined = layoutObj?.keys;
+    this.currentLayoutPhonemes = normalizeKeymap(layoutKeys || {});
+
+    const availableSchemes = Array.from(this.data.schemes.keys()).sort();
+    if (availableSchemes.length) {
+      this.currentSchemeId = availableSchemes.includes(this.plugin.settings.defaultInputScheme)
+        ? this.plugin.settings.defaultInputScheme
+        : availableSchemes[0]!;
+    } else {
+      this.currentSchemeId = this.plugin.settings.defaultInputScheme || "itrans";
+    }
+    this.currentScheme = this.data.schemes.get(this.currentSchemeId) ?? null;
+
+    // Populate input dropdown
+    this.inputSel.empty?.();
+    if (availableSchemes.length === 0) {
+      this.inputSel.createEl("option", { value: "", text: "(no schemes found)" });
+      this.inputSel.disabled = true;
+    } else {
+      for (const id of availableSchemes) {
+        const o = this.inputSel.createEl("option", { text: id, value: id });
+        if (id === this.currentSchemeId) o.selected = true;
+      }
+    }
+
+    // Build keyboard DOM now that keyboardEl exists
+    this.mountKeyboardShell();
+    this.cacheLabelRefs();
+
+    // Build initial labels
+    this.rebuildAndApplyLabels();
+
+    /* -------- Wire events -------- */
+
+    // Persist show keyboard toggle
+    this.showKbChk.onchange = () => {
+      this.keyboardEl.toggleClass("its-hidden", !this.showKbChk.checked);
+      this.plugin.settings.showKeyboardByDefault = this.showKbChk.checked;
+      this.plugin.saveSettings();
+    };
+
+    // Input selector change
+    this.inputSel.onchange = async () => {
+      this.currentSchemeId = this.inputSel.value;
+      this.plugin.settings.defaultInputScheme = this.currentSchemeId;
+      await this.plugin.saveSettings();
+      this.currentScheme = this.data.schemes.get(this.currentSchemeId) ?? null;
+      this.rebuildAndApplyLabels();
+      this.fullConvert();
+    };
+
+    // Output selector change
+    this.outputSel.onchange = async () => {
+      this.plugin.settings.defaultOutputScript = this.outputSel.value;
+      await this.plugin.saveSettings();
+      this.rebuildAndApplyLabels();
+      this.fullConvert();
+    };
+
+    // Label mode change
+    this.labelModeSel.onchange = async () => {
+      this.labelMode = this.labelModeSel.value as "input" | "output";
+      this.rebuildAndApplyLabels();
+    };
+
     // Typing handlers (space + idle)
     const convertOnSpace = this.plugin.settings.convertOnSpace ?? true;
     const idleMs = this.plugin.settings.idleMs ?? 3000;
@@ -237,7 +252,7 @@ export class TypingStudioView extends ItemView {
     this.leftEl.addEventListener("keydown", (ev) => {
       this.lastInputAt = Date.now();
       if (ev.key === " " && convertOnSpace) {
-        this.fullConvert(); // simplifies: convert entire buffer
+        this.fullConvert();
         queueMicrotask(() => this.scheduleIdle(idleMs));
       } else {
         this.scheduleIdle(idleMs);
@@ -262,7 +277,7 @@ export class TypingStudioView extends ItemView {
       const phoneme = this.pickLayer(layers);
       if (!phoneme) return;
 
-      const token = this.currentScheme?.[phoneme] ?? phoneme; // map via scheme, else identity
+      const token = this.currentScheme?.[phoneme] ?? phoneme;
       if (token) {
         ev.preventDefault();
         this.highlightKey(ev.code, true);
@@ -334,75 +349,81 @@ export class TypingStudioView extends ItemView {
     // Modifier highlights for hardware keys
     this.bindModifierHighlights();
 
+    // Hover card (safe init AFTER keyboard exists)
+    this.initHoverCard();
+
     // First conversion
     this.fullConvert();
   }
 
-  async onClose() {}
+  async onClose() {
+    // remove floating tip if we created one
+    if (this.tipEl && this.tipEl.parentElement) {
+      this.tipEl.parentElement.removeChild(this.tipEl);
+    }
+    this.tipEl = null;
+  }
 
   /* ── Helpers ───────────────────────────────────────────── */
 
   private rebuildAndApplyLabels(): void {
-  const forOutput = this.labelMode === "output";
-  let schemeForLabels: SchemeMap | null = null;
+    const useOutput = this.labelMode === "output";
+    const outId =
+      (this.outputSel && this.outputSel.value) ||
+      this.plugin.settings.defaultOutputScript ||
+      "devanagari";
 
-  if (forOutput) {
-    // Prefer a user-provided scheme with same id as the output (e.g., "telugu", "devanagari")
-    schemeForLabels = this.data.schemes.get(this.outputSel?.value || "") ?? null;
-  } else {
-    schemeForLabels = this.currentScheme; // input scheme
+    this.inputLabelKeymap = this.buildLabelKeymapWithFallback(
+      this.currentLayoutPhonemes,
+      this.currentScheme,
+      outId
+    );
+    this.outputLabelKeymap = this.buildLabelKeymapWithFallback(
+      this.currentLayoutPhonemes,
+      this.data.schemes.get(outId) ?? null,
+      outId
+    );
+
+    this.currentLabelKeymap = useOutput ? this.outputLabelKeymap : this.inputLabelKeymap;
+    this.applyKeymapLabels(this.currentLabelKeymap);
   }
 
-  this.currentLabelKeymap = this.buildLabelKeymapWithFallback(
-    this.currentLayoutPhonemes,
-    schemeForLabels,
-    this.outputSel?.value || ""
-  );
-  this.applyKeymapLabels(this.currentLabelKeymap);
-}
+  /** Map layout tokens via a scheme; if missing, try ITRANS->Sanscript(target); else show token. */
+  private buildLabelKeymapWithFallback(
+    layout: Keymap,
+    scheme: SchemeMap | null,
+    outputTarget: string
+  ): LabelKeymap {
+    const out: LabelKeymap = {};
+    const itrans = this.data.schemes.get("itrans") ?? null;
+    const canTranslit = !!(itrans && (Sanscript as any)?.t && outputTarget);
 
-/** Map layout tokens to labels via a scheme; if missing, try ITRANS→Sanscript to the target. */
-private buildLabelKeymapWithFallback(
-  layout: Keymap,
-  scheme: SchemeMap | null,
-  outputTarget: string
-): LabelKeymap {
-  const out: LabelKeymap = {};
-  const itrans = this.data.schemes.get("itrans") ?? null;
-  const canTranslit = !!(itrans && (Sanscript as any)?.t && outputTarget);
-
-  const mapOne = (token?: string): string => {
-    if (!token) return "";
-    // 1) direct scheme map (best)
-    const s1 = scheme?.[token];
-    if (s1) return s1;
-    // 2) fallback: token -> ITRANS -> Sanscript to output (works when no scheme exists for output)
-    if (canTranslit) {
-      const base = itrans![token];
-      if (base) {
-        try { return (Sanscript as any).t(base, "itrans", outputTarget); }
-        catch { /* fall through */ }
+    const mapOne = (token?: string): string => {
+      if (!token) return "";
+      const direct = scheme?.[token];
+      if (direct) return direct;
+      if (canTranslit) {
+        const roman = itrans?.[token];
+        if (roman) {
+          try { return (Sanscript as any).t(roman, "itrans", outputTarget); } catch {}
+        }
       }
-    }
-    // 3) last resort: show the token itself
-    return token;
-  };
-
-  for (const [code, layers] of Object.entries(layout)) {
-    const lab: KeyLayers = {
-      base: mapOne(layers.base),
-      shift: mapOne(layers.shift),
-      alt: mapOne(layers.alt),
-      altShift: mapOne(layers.altShift),
-      ctrl: mapOne(layers.ctrl),
-      ctrlShift: mapOne(layers.ctrlShift),
-      label: layers.label ? mapOne(layers.label) : undefined,
+      return token;
     };
-    out[code] = lab;
-  }
-  return out;
-}
 
+    for (const [code, layers] of Object.entries(layout)) {
+      out[code] = {
+        base: mapOne(layers.base),
+        shift: mapOne(layers.shift),
+        alt: mapOne(layers.alt),
+        altShift: mapOne(layers.altShift),
+        ctrl: mapOne(layers.ctrl),
+        ctrlShift: mapOne(layers.ctrlShift),
+        label: layers.label ? mapOne(layers.label) : undefined,
+      };
+    }
+    return out;
+  }
 
   private buildLabelKeymap(layout: Keymap, scheme: SchemeMap | null): LabelKeymap {
     const out: LabelKeymap = {};
@@ -434,13 +455,101 @@ private buildLabelKeymapWithFallback(
   }
 
   private applyKeymapLabels(map: LabelKeymap): void {
-    for (const [code, node] of this.labelRefs.entries()) {
-      const layers = map[code];
-      let text = layers ? this.pickLayer(layers) || layers.label || "" : "";
-      if (!text) text = STATIC_LABELS[code] ?? "";
-      node.setText(text);
-    }
+  for (const [code, labelEl] of this.labelRefs.entries()) {
+    const layers = map[code];
+    let text = layers ? this.pickLayer(layers) || layers.label || "" : "";
+    if (!text) text = STATIC_LABELS[code] ?? "";
+    labelEl.setText(text);
   }
+  if (this.hoveredCode) this.renderTip(this.hoveredCode);
+}
+
+
+  private initHoverCard(): void {
+  if (this.tipEl) return;
+  this.tipEl = document.createElement("div");
+  this.tipEl.className = "its-tip its-hidden";
+  document.body.appendChild(this.tipEl);
+
+  this.keyboardEl.addEventListener("mousemove", (ev: MouseEvent) => {
+    const target = ev.target as HTMLElement | null;
+    const keyEl = target?.closest?.(".its-kb-key") as HTMLElement | null;
+    if (!keyEl) { this.hideTip(); return; }
+    const code = keyEl.getAttr("data-code");
+    if (!code) { this.hideTip(); return; }
+
+    // defer showing to reduce noise
+    if (this.hoveredCode !== code) {
+      this.hoveredCode = code;
+      if (this.tipTimer) window.clearTimeout(this.tipTimer);
+      this.tipTimer = window.setTimeout(() => {
+        this.renderTip(code);
+        this.tipEl?.classList.remove("its-hidden");
+      }, 120);
+    }
+    this.positionTip(ev);
+  }, { passive: true });
+
+  this.keyboardEl.addEventListener("mouseleave", () => this.hideTip(), { passive: true });
+}
+
+private hideTip(): void {
+  this.hoveredCode = null;
+  if (this.tipTimer) { window.clearTimeout(this.tipTimer); this.tipTimer = null; }
+  if (this.tipEl) this.tipEl.addClass("its-hidden");
+}
+
+private positionTip(e: MouseEvent): void {
+  if (!this.tipEl) return;
+  const pad = 14;
+  this.tipEl.style.position = "fixed";
+  this.tipEl.style.left = `${e.clientX + pad}px`;
+  this.tipEl.style.top  = `${e.clientY + pad}px`;
+}
+
+private renderTip(code: string): void {
+  if (!this.tipEl) return;
+
+  const lay = this.currentLayoutPhonemes?.[code] || {};
+  const layerNames: Array<keyof KeyLayers> = ["base","shift","alt","altShift","ctrl","ctrlShift"];
+
+  const inId  = (this.inputSel && this.inputSel.value) || this.currentSchemeId || "input";
+  const outId = (this.outputSel && this.outputSel.value) || this.plugin.settings.defaultOutputScript || "output";
+
+  const inMap  = this.inputLabelKeymap[code]  || {};
+  const outMap = this.outputLabelKeymap[code] || {};
+
+  const get = (m: any, k: keyof KeyLayers) => (m && (m[k] || m.label)) || "";
+
+  const curIn  = get(inMap,  this.pickLayer(lay) as keyof KeyLayers) || this.pickLayer(inMap as any) || "";
+  const curOut = get(outMap, this.pickLayer(lay) as keyof KeyLayers) || this.pickLayer(outMap as any) || "";
+
+  // base values to compare against
+  const baseIn  = get(inMap,  "base");
+  const baseOut = get(outMap, "base");
+
+  const rows = layerNames
+    .map((k) => {
+      const i = get(inMap, k);
+      const o = get(outMap, k);
+      // always include base; others only if they differ from base and are non-empty
+      const include = (k === "base") || ((i && i !== baseIn) || (o && o !== baseOut));
+      if (!include) return "";
+      return `<div class="itstip-row"><span class="ly">${k}</span><span class="in">${i || "·"}</span><span class="out">${o || "·"}</span></div>`;
+    })
+    .filter(Boolean)
+    .join("");
+
+  this.tipEl.innerHTML = `
+    <div class="itstip-main">
+      <span class="pill">${inId}</span> ${curIn || "·"}
+      &nbsp;→&nbsp;
+      <span class="pill">${outId}</span> ${curOut || "·"}
+    </div>
+    <div class="itstip-rows">${rows}</div>
+  `;
+}
+
 
   private backspaceOne() {
     const el = this.leftEl;
